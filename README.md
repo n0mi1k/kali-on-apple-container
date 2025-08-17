@@ -17,6 +17,7 @@ Kali images does not come with any packages installed. After setup, run the belo
 apt-get update
 apt install -y kali-linux-headless
 ```
+Need to rebuild or create a new container? Just re-run the script! You may delete old containers with `container rm <container-name>`.
 
 ## ⚙️ Resource Allocation
 To allocate more resources, such as using `4` CPUs and `8GB` of memory, modify below variables in `setup.sh`:
