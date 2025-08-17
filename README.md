@@ -1,6 +1,8 @@
 # kali-on-apple-container
 Run **persisted Kali** seamlessly on Apple's MacOS's lightweight Container service (https://github.com/apple/container).
 
+**NOTE:** By persistence, meaning that the container can be stopped, started and reused, mimicking a VM-like experience but with containers.
+
 I love using containers for Kali due to its lightweightness and speed when starting a session. Apple's Container service ensures fast and lightweight runtime of containers on MacOS.
 
 # 📦 Setup
