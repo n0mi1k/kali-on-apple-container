@@ -1,9 +1,9 @@
 # kali-on-apple-container
 Run **persisted Kali** seamlessly on Apple's MacOS's lightweight Container service (https://github.com/apple/container).
 
-**NOTE:** By persistence, meaning that the container can be stopped, started and reused, mimicking a VM-like experience but with containers.
+**NOTE:** By persistence, it means that the container can be stopped, started and reused, mimicking a VM-like experience but with containers.
 
-I love using containers for Kali due to its lightweightness and speed when starting a session. Apple's Container service ensures fast and lightweight runtime of containers on MacOS.
+I love using containers to run Kali due to its lightweightness and speed when starting a session. Apple's Container service ensures fast and lightweight runtime of containers on MacOS.
 
 # 📦 Setup
 Its simple! Just run `./setup.sh`.
@@ -24,9 +24,9 @@ To allocate more resources, such as using `4` CPUs and `8GB` of memory, modify b
 CONTAINER_CPUS="4"
 CONTAINER_MEMORY="8GB"
 ```
-Otherwise, leave empty as `""` to use default system values. Configure this in `setup.sh` before running.
+Otherwise, **leave empty as `""` to use default system values**. If you wish to configure CPU and Memory resources, set the above in `setup.sh` before running.
 
 # 🚀 Command Aliases
 The following commands will be available after setup. They are meant for making it easy to start your kali session. Make sure to run `source ~/.zshrc` or start a new shell after setup to enable the aliases.
 * `kali-start`: This starts the container again after it was exited
-* `kali-shell`: This spawns additional shell sessions on an running container
+* `kali-shell`: This spawns additional shell sessions on a running container
