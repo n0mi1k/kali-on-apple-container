@@ -39,15 +39,41 @@ if [ ! -d "$SHARE_PATH" ]; then
 fi
 
 # --- Add aliases to .zshrc before container run ---
-if ! grep -q "alias kali-start=" "$ZSHRC"; then
-    echo "alias kali-start='container start $CONTAINER_NAME --interactive'" >> "$ZSHRC"
-    echo "[*] Added alias: kali-start"
+
+# --- Add aliases to .zshrc (always overwrite) ---
+
+# Remove old aliases if they exist
+sed -i '' '/alias kali=/d' "$ZSHRC"
+sed -i '' '/alias kali-shell=/d' "$ZSHRC"
+sed -i '' '/alias kali-start=/d' "$ZSHRC"
+
+# Alias: kali
+echo "alias kali='container start $CONTAINER_NAME --interactive'" >> "$ZSHRC"
+echo "[*] Installed alias: kali"
+
+# Alias: kali-shell
+echo "alias kali-shell='container exec --interactive --tty $CONTAINER_NAME /bin/bash'" >> "$ZSHRC"
+echo "[*] Installed alias: kali-shell"
+
+# Alias: kali-start (dynamic cpus/memory)
+RUN_PARTS=("container run")
+
+if [ -n "$CONTAINER_CPUS" ]; then
+    RUN_PARTS+=("--cpus" "$CONTAINER_CPUS")
 fi
 
-if ! grep -q "alias kali-shell=" "$ZSHRC"; then
-    echo "alias kali-shell='container exec --interactive --tty $CONTAINER_NAME /bin/bash'" >> "$ZSHRC"
-    echo "[*] Added alias: kali-shell"
+if [ -n "$CONTAINER_MEMORY" ]; then
+    RUN_PARTS+=("--memory" "$CONTAINER_MEMORY")
 fi
+
+RUN_PARTS+=( "--interactive" "--name" "$CONTAINER_NAME" "--tty" "--volume" "$SHARE_PATH:/kali-share" "--workdir" "/kali-share" "$IMAGE" )
+
+# Join array into single alias safely
+KALI_START_CMD="${RUN_PARTS[*]}"
+
+echo "alias kali-start='$KALI_START_CMD'" >> "$ZSHRC"
+echo "[*] Installed alias: kali-start"
+
 
 # --- Detect if script is sourced ---
 (
@@ -79,17 +105,22 @@ if [ -n "$CONTAINER_MEMORY" ]; then
     RUN_OPTS+=(--memory "$CONTAINER_MEMORY")
 fi
 
+# --- Clean up any existing container or network artifacts ---
+echo "[] Checking for existing container artifacts..."
+if container list --all | grep -q "$CONTAINER_NAME"; then
+    echo "[] Removing existing container..."
+    container stop "$CONTAINER_NAME" 2>/dev/null || true
+    container rm "$CONTAINER_NAME" 2>/dev/null || true
+fi
+
 # --- Create Kali container if it doesn't exist ---
-if container list | grep -q "$CONTAINER_NAME"; then
-    echo "[*] Container '$CONTAINER_NAME' already exists. Skipping creation."
-else
-    echo "[*] Creating new Kali container '$CONTAINER_NAME'..."
-    container run --interactive --tty \
-        --name "$CONTAINER_NAME" \
-        --volume "$SHARE_PATH:/kali-share" \
-        --workdir /kali-share \
-        "${RUN_OPTS[@]}" \
-        "$IMAGE"
+echo "[] Creating new Kali container '$CONTAINER_NAME'..."
+container run --interactive --tty \
+    --name "$CONTAINER_NAME" \
+    --volume "$SHARE_PATH:/kali-share" \
+    --workdir /kali-share \
+    "${RUN_OPTS[@]}" \
+    "$IMAGE"
 fi
 
 echo "[✓] Setup complete!"
