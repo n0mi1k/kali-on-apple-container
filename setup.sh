@@ -12,7 +12,7 @@ ZSHRC="$HOME/.zshrc"
 CONTAINER_CPUS=""
 CONTAINER_MEMORY=""
 
-echo "[*] Starting Kali setup with Apple's container system..."
+echo "[] Starting Kali setup with Apple's container system..."
 
 # --- Check if brew is installed ---
 if ! command -v brew &>/dev/null; then
@@ -22,40 +22,28 @@ fi
 
 # --- Check if container CLI is installed ---
 if ! command -v container &>/dev/null; then
-    echo "[*] Installing Apple's container CLI..."
+    echo "[] Installing Apple's container CLI..."
     brew install --cask container
 else
-    echo "[*] container CLI already installed."
+    echo "[] container CLI already installed."
 fi
 
 # --- Start container system ---
-echo "[*] Starting container system..."
+echo "[] Starting container system..."
 container system start || true
 
 # --- Ensure shared directory exists ---
 if [ ! -d "$SHARE_PATH" ]; then
-    echo "[*] Creating shared directory at $SHARE_PATH..."
+    echo "[] Creating shared directory at $SHARE_PATH..."
     mkdir -p "$SHARE_PATH"
 fi
 
-# --- Add aliases to .zshrc before container run ---
-
-# --- Add aliases to .zshrc (always overwrite) ---
-
-# Remove old aliases if they exist
+# --- Remove old aliases if they exist ---
 sed -i '' '/alias kali=/d' "$ZSHRC"
 sed -i '' '/alias kali-shell=/d' "$ZSHRC"
 sed -i '' '/alias kali-start=/d' "$ZSHRC"
 
-# Alias: kali
-echo "alias kali='container start $CONTAINER_NAME --interactive'" >> "$ZSHRC"
-echo "[*] Installed alias: kali"
-
-# Alias: kali-shell
-echo "alias kali-shell='container exec --interactive --tty $CONTAINER_NAME /bin/bash'" >> "$ZSHRC"
-echo "[*] Installed alias: kali-shell"
-
-# Alias: kali-start (dynamic cpus/memory)
+# --- Build run command parts ---
 RUN_PARTS=("container run")
 
 if [ -n "$CONTAINER_CPUS" ]; then
@@ -66,27 +54,33 @@ if [ -n "$CONTAINER_MEMORY" ]; then
     RUN_PARTS+=("--memory" "$CONTAINER_MEMORY")
 fi
 
-RUN_PARTS+=( "--interactive" "--name" "$CONTAINER_NAME" "--tty" "--volume" "$SHARE_PATH:/kali-share" "--workdir" "/kali-share" "$IMAGE" )
+RUN_PARTS+=("--interactive" "--name" "$CONTAINER_NAME" "--tty" "--volume" "$SHARE_PATH:/kali-share" "--workdir" "/kali-share" "$IMAGE")
 
 # Join array into single alias safely
 KALI_START_CMD="${RUN_PARTS[*]}"
 
-echo "alias kali-start='$KALI_START_CMD'" >> "$ZSHRC"
-echo "[*] Installed alias: kali-start"
+# --- Add aliases to .zshrc ---
+echo "alias kali='container start $CONTAINER_NAME --interactive'" >> "$ZSHRC"
+echo "[] Installed alias: kali"
 
+echo "alias kali-shell='container exec --interactive --tty $CONTAINER_NAME /bin/bash'" >> "$ZSHRC"
+echo "[] Installed alias: kali-shell"
+
+echo "alias kali-start='$KALI_START_CMD'" >> "$ZSHRC"
+echo "[] Installed alias: kali-start"
 
 # --- Detect if script is sourced ---
 (
-    if [[ -n "$ZSH_EVAL_CONTEXT" && "$ZSH_EVAL_CONTEXT" == *:file ]]; then
+    if [[ -n "$ZSH_EVAL_CONTEXT" && "$ZSH_EVAL_CONTEXT" =~ :file ]]; then
         IS_SOURCED=1
-    elif [ "$0" = "bash" ] || [ "$0" = "-bash" ]; then
+    elif [ "$0" = "bash" ]; then
         IS_SOURCED=1
     else
         IS_SOURCED=0
     fi
 
     if [ "$IS_SOURCED" -eq 1 ]; then
-        echo "[*] Script was sourced. Reloading $ZSHRC..."
+        echo "[] Script was sourced. Reloading $ZSHRC..."
         # shellcheck disable=SC1090
         source "$ZSHRC"
         echo "[✓] Aliases are now active in this session."
@@ -96,7 +90,7 @@ echo "[*] Installed alias: kali-start"
     fi
 )
 
-# --- Build container run options ---
+# --- Build container run options (reuse logic) ---
 RUN_OPTS=()
 if [ -n "$CONTAINER_CPUS" ]; then
     RUN_OPTS+=(--cpus "$CONTAINER_CPUS")
@@ -105,7 +99,7 @@ if [ -n "$CONTAINER_MEMORY" ]; then
     RUN_OPTS+=(--memory "$CONTAINER_MEMORY")
 fi
 
-# --- Clean up any existing container or network artifacts ---
+# --- Clean up any existing container ---
 echo "[] Checking for existing container artifacts..."
 if container list --all | grep -q "$CONTAINER_NAME"; then
     echo "[] Removing existing container..."
@@ -113,7 +107,7 @@ if container list --all | grep -q "$CONTAINER_NAME"; then
     container rm "$CONTAINER_NAME" 2>/dev/null || true
 fi
 
-# --- Create Kali container if it doesn't exist ---
+# --- Create Kali container ---
 echo "[] Creating new Kali container '$CONTAINER_NAME'..."
 container run --interactive --tty \
     --name "$CONTAINER_NAME" \
@@ -121,7 +115,6 @@ container run --interactive --tty \
     --workdir /kali-share \
     "${RUN_OPTS[@]}" \
     "$IMAGE"
-fi
 
 echo "[✓] Setup complete!"
 echo "[✓] Use 'kali-start' to start the container and 'kali-shell' to get a shell inside it."
