@@ -15,8 +15,6 @@ Enter `exit` to close the session and the container stops gracefully. Use the co
 
 ### Network Connectivity Fix
 
-Reference: https://github.com/apple/container/blob/main/docs/technical-overview.md#container-ip-addresses
-
 In macOS 15, limitations in the vmnet framework mean that the container network can only be created when the first container starts. Since the network XPC helper provides IP addresses to containers, and the helper has to start before the first container, it is possible for the network helper and vmnet to disagree on the subnet address, resulting in containers that are completely cut off from the network.
 
 Normally, vmnet creates the container network using the CIDR address 192.168.64.1/24, and on macOS 15, `container` defaults to using this CIDR address in the network helper. To diagnose and resolve issues stemming from a subnet address mismatch between vmnet and the network helper:
@@ -30,7 +28,9 @@ Normally, vmnet creates the container network using the CIDR address 192.168.64.
     defaults write com.apple.container.defaults network.subnet 192.168.66.1/24
     ```
   - Run `container system start` to launch services again.
-  - Try running the container again and verify that its IP address matches the current bridge interface value.
+  - Try running the container again and verify that its IP address matches the current bridge interface value.  
+
+**Reference:** https://github.com/apple/container/blob/main/docs/technical-overview.md#container-ip-addresses
 
 ## Kali Metapackages
 After setup, run the below two commands in a `kali-container` session to install Kali metapackages which includes security tools such as `nmap` and `msfconsole`.
